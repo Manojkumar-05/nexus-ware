@@ -7,413 +7,467 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "13.0.4"
   }
   public: {
     Tables: {
-      orders: {
+      customers: {
         Row: {
-          id: string
-          customer: string
-          items: number
-          total: number
-          status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled'
-          date: string
-          priority: 'high' | 'medium' | 'low'
-          created_at?: string
-          updated_at?: string
-        }
-        Insert: {
-          id: string
-          customer: string
-          items: number
-          total: number
-          status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled'
-          date: string
-          priority: 'high' | 'medium' | 'low'
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          customer?: string
-          items?: number
-          total?: number
-          status?: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled'
-          date?: string
-          priority?: 'high' | 'medium' | 'low'
-          created_at?: string
-          updated_at?: string
-        }
-      }
-      suppliers: {
-        Row: {
-          id: string
-          name: string
-          contact: string
-          email: string
-          phone: string
           address: string
-          category: string
-          status: 'active' | 'inactive' | 'pending'
-          rating: number
+          avatar: string
+          avg_order_value: number
+          company: string
+          created_at: string | null
+          customer_since: string
+          email: string
+          first_order: string
+          id: string
+          last_order: string
+          name: string
+          notes: string
+          phone: string
+          status: string
+          tags: string[]
+          tier: string
           total_orders: number
           total_spent: number
-          last_order: string
-          reliability: 'excellent' | 'good' | 'fair' | 'poor'
-          created_at?: string
-          updated_at?: string
+          updated_at: string | null
         }
         Insert: {
-          id: string
-          name: string
-          contact: string
-          email: string
-          phone: string
           address: string
-          category: string
-          status: 'active' | 'inactive' | 'pending'
-          rating: number
+          avatar: string
+          avg_order_value: number
+          company: string
+          created_at?: string | null
+          customer_since: string
+          email: string
+          first_order: string
+          id: string
+          last_order: string
+          name: string
+          notes: string
+          phone: string
+          status: string
+          tags: string[]
+          tier: string
           total_orders: number
           total_spent: number
-          last_order: string
-          reliability: 'excellent' | 'good' | 'fair' | 'poor'
-          created_at?: string
-          updated_at?: string
+          updated_at?: string | null
         }
         Update: {
-          id?: string
-          name?: string
-          contact?: string
-          email?: string
-          phone?: string
           address?: string
-          category?: string
-          status?: 'active' | 'inactive' | 'pending'
-          rating?: number
+          avatar?: string
+          avg_order_value?: number
+          company?: string
+          created_at?: string | null
+          customer_since?: string
+          email?: string
+          first_order?: string
+          id?: string
+          last_order?: string
+          name?: string
+          notes?: string
+          phone?: string
+          status?: string
+          tags?: string[]
+          tier?: string
           total_orders?: number
           total_spent?: number
-          last_order?: string
-          reliability?: 'excellent' | 'good' | 'fair' | 'poor'
-          created_at?: string
-          updated_at?: string
+          updated_at?: string | null
         }
-      }
-      inventory: {
-        Row: {
-          id: string
-          name: string
-          sku: string
-          category: string
-          description: string
-          quantity: number
-          min_quantity: number
-          max_quantity: number
-          unit_price: number
-          supplier: string
-          location: string
-          status: 'in-stock' | 'low-stock' | 'out-of-stock'
-          last_updated: string
-          reorder_point: number
-          total_value: number
-          created_at?: string
-          updated_at?: string
-        }
-        Insert: {
-          id: string
-          name: string
-          sku: string
-          category: string
-          description: string
-          quantity: number
-          min_quantity: number
-          max_quantity: number
-          unit_price: number
-          supplier: string
-          location: string
-          status: 'in-stock' | 'low-stock' | 'out-of-stock'
-          last_updated: string
-          reorder_point: number
-          total_value: number
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          name?: string
-          sku?: string
-          category?: string
-          description?: string
-          quantity?: number
-          min_quantity?: number
-          max_quantity?: number
-          unit_price?: number
-          supplier?: string
-          location?: string
-          status?: 'in-stock' | 'low-stock' | 'out-of-stock'
-          last_updated?: string
-          reorder_point?: number
-          total_value?: number
-          created_at?: string
-          updated_at?: string
-        }
-      }
-      sales: {
-        Row: {
-          id: string
-          customer: string
-          customer_email: string
-          customer_phone: string
-          items: Json
-          total: number
-          status: 'completed' | 'processing' | 'shipped' | 'pending'
-          date: string
-          time: string
-          payment_method: string
-          salesperson: string
-          location: string
-          notes: string
-          created_at?: string
-          updated_at?: string
-        }
-        Insert: {
-          id: string
-          customer: string
-          customer_email: string
-          customer_phone: string
-          items: Json
-          total: number
-          status: 'completed' | 'processing' | 'shipped' | 'pending'
-          date: string
-          time: string
-          payment_method: string
-          salesperson: string
-          location: string
-          notes: string
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          customer?: string
-          customer_email?: string
-          customer_phone?: string
-          items?: Json
-          total?: number
-          status?: 'completed' | 'processing' | 'shipped' | 'pending'
-          date?: string
-          time?: string
-          payment_method?: string
-          salesperson?: string
-          location?: string
-          notes?: string
-          created_at?: string
-          updated_at?: string
-        }
+        Relationships: []
       }
       employees: {
         Row: {
-          id: string
-          name: string
+          achievements: string[]
+          address: string
+          avatar: string
+          created_at: string | null
+          department: string
+          direct_reports: number
           email: string
+          hire_date: string
+          id: string
+          manager: string
+          name: string
+          performance: number
           phone: string
           position: string
-          department: string
-          hire_date: string
           salary: number
-          status: 'active' | 'inactive'
-          performance: number
-          avatar: string
-          address: string
-          manager: string
-          direct_reports: number
           skills: string[]
-          achievements: string[]
-          created_at?: string
-          updated_at?: string
+          status: string
+          updated_at: string | null
         }
         Insert: {
-          id: string
-          name: string
+          achievements: string[]
+          address: string
+          avatar: string
+          created_at?: string | null
+          department: string
+          direct_reports: number
           email: string
+          hire_date: string
+          id: string
+          manager: string
+          name: string
+          performance: number
           phone: string
           position: string
-          department: string
-          hire_date: string
           salary: number
-          status: 'active' | 'inactive'
-          performance: number
-          avatar: string
-          address: string
-          manager: string
-          direct_reports: number
           skills: string[]
-          achievements: string[]
-          created_at?: string
-          updated_at?: string
+          status: string
+          updated_at?: string | null
         }
         Update: {
-          id?: string
-          name?: string
+          achievements?: string[]
+          address?: string
+          avatar?: string
+          created_at?: string | null
+          department?: string
+          direct_reports?: number
           email?: string
+          hire_date?: string
+          id?: string
+          manager?: string
+          name?: string
+          performance?: number
           phone?: string
           position?: string
-          department?: string
-          hire_date?: string
           salary?: number
-          status?: 'active' | 'inactive'
-          performance?: number
-          avatar?: string
-          address?: string
-          manager?: string
-          direct_reports?: number
           skills?: string[]
-          achievements?: string[]
-          created_at?: string
-          updated_at?: string
+          status?: string
+          updated_at?: string | null
         }
+        Relationships: []
       }
-      customers: {
+      inventory: {
         Row: {
+          category: string
+          created_at: string | null
+          description: string
           id: string
+          last_updated: string
+          location: string
+          max_quantity: number
+          min_quantity: number
           name: string
-          email: string
-          phone: string
-          company: string
-          status: 'active' | 'inactive'
-          tier: 'bronze' | 'silver' | 'gold' | 'platinum'
-          total_orders: number
-          total_spent: number
-          last_order: string
-          first_order: string
-          avg_order_value: number
-          customer_since: string
-          address: string
-          notes: string
-          tags: string[]
-          avatar: string
-          created_at?: string
-          updated_at?: string
+          quantity: number
+          reorder_point: number
+          sku: string
+          status: string
+          supplier: string
+          total_value: number
+          unit_price: number
+          updated_at: string | null
         }
         Insert: {
+          category: string
+          created_at?: string | null
+          description: string
           id: string
+          last_updated: string
+          location: string
+          max_quantity: number
+          min_quantity: number
           name: string
-          email: string
-          phone: string
-          company: string
-          status: 'active' | 'inactive'
-          tier: 'bronze' | 'silver' | 'gold' | 'platinum'
-          total_orders: number
-          total_spent: number
-          last_order: string
-          first_order: string
-          avg_order_value: number
-          customer_since: string
-          address: string
-          notes: string
-          tags: string[]
-          avatar: string
-          created_at?: string
-          updated_at?: string
+          quantity: number
+          reorder_point: number
+          sku: string
+          status: string
+          supplier: string
+          total_value: number
+          unit_price: number
+          updated_at?: string | null
         }
         Update: {
+          category?: string
+          created_at?: string | null
+          description?: string
           id?: string
+          last_updated?: string
+          location?: string
+          max_quantity?: number
+          min_quantity?: number
           name?: string
-          email?: string
-          phone?: string
-          company?: string
-          status?: 'active' | 'inactive'
-          tier?: 'bronze' | 'silver' | 'gold' | 'platinum'
-          total_orders?: number
-          total_spent?: number
-          last_order?: string
-          first_order?: string
-          avg_order_value?: number
-          customer_since?: string
-          address?: string
-          notes?: string
-          tags?: string[]
-          avatar?: string
-          created_at?: string
-          updated_at?: string
+          quantity?: number
+          reorder_point?: number
+          sku?: string
+          status?: string
+          supplier?: string
+          total_value?: number
+          unit_price?: number
+          updated_at?: string | null
         }
+        Relationships: []
+      }
+      orders: {
+        Row: {
+          created_at: string | null
+          customer: string
+          date: string
+          id: string
+          items: number
+          priority: string
+          status: string
+          total: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          customer: string
+          date: string
+          id: string
+          items: number
+          priority: string
+          status: string
+          total: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          customer?: string
+          date?: string
+          id?: string
+          items?: number
+          priority?: string
+          status?: string
+          total?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          full_name: string | null
+          id: string
+          username: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          id: string
+          username?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          username?: string | null
+        }
+        Relationships: []
       }
       reports: {
         Row: {
+          created_at: string | null
+          created_by: string
+          data: Json
+          description: string
+          generated_at: string
           id: string
           name: string
           type: string
-          description: string
-          data: Json
-          generated_at: string
-          created_by: string
-          created_at?: string
-          updated_at?: string
+          updated_at: string | null
         }
         Insert: {
+          created_at?: string | null
+          created_by: string
+          data: Json
+          description: string
+          generated_at: string
           id: string
           name: string
           type: string
-          description: string
-          data: Json
-          generated_at: string
-          created_by: string
-          created_at?: string
-          updated_at?: string
+          updated_at?: string | null
         }
         Update: {
+          created_at?: string | null
+          created_by?: string
+          data?: Json
+          description?: string
+          generated_at?: string
           id?: string
           name?: string
           type?: string
-          description?: string
-          data?: Json
-          generated_at?: string
-          created_by?: string
-          created_at?: string
-          updated_at?: string
+          updated_at?: string | null
         }
+        Relationships: []
+      }
+      sales: {
+        Row: {
+          created_at: string | null
+          customer: string
+          customer_email: string
+          customer_phone: string
+          date: string
+          id: string
+          items: Json
+          location: string
+          notes: string
+          payment_method: string
+          salesperson: string
+          status: string
+          time: string
+          total: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          customer: string
+          customer_email: string
+          customer_phone: string
+          date: string
+          id: string
+          items: Json
+          location: string
+          notes: string
+          payment_method: string
+          salesperson: string
+          status: string
+          time: string
+          total: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          customer?: string
+          customer_email?: string
+          customer_phone?: string
+          date?: string
+          id?: string
+          items?: Json
+          location?: string
+          notes?: string
+          payment_method?: string
+          salesperson?: string
+          status?: string
+          time?: string
+          total?: number
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       settings: {
         Row: {
+          category: string
+          created_at: string | null
+          description: string
           id: string
           key: string
+          updated_at: string | null
           value: Json
-          category: string
-          description: string
-          created_at?: string
-          updated_at?: string
         }
         Insert: {
+          category: string
+          created_at?: string | null
+          description: string
           id: string
           key: string
+          updated_at?: string | null
           value: Json
-          category: string
-          description: string
-          created_at?: string
-          updated_at?: string
         }
         Update: {
+          category?: string
+          created_at?: string | null
+          description?: string
           id?: string
           key?: string
+          updated_at?: string | null
           value?: Json
-          category?: string
-          description?: string
-          created_at?: string
-          updated_at?: string
         }
+        Relationships: []
+      }
+      suppliers: {
+        Row: {
+          address: string
+          category: string
+          contact: string
+          created_at: string | null
+          email: string
+          id: string
+          last_order: string
+          name: string
+          phone: string
+          rating: number
+          reliability: string
+          status: string
+          total_orders: number
+          total_spent: number
+          updated_at: string | null
+        }
+        Insert: {
+          address: string
+          category: string
+          contact: string
+          created_at?: string | null
+          email: string
+          id: string
+          last_order: string
+          name: string
+          phone: string
+          rating: number
+          reliability: string
+          status: string
+          total_orders: number
+          total_spent: number
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string
+          category?: string
+          contact?: string
+          created_at?: string | null
+          email?: string
+          id?: string
+          last_order?: string
+          name?: string
+          phone?: string
+          rating?: number
+          reliability?: string
+          status?: string
+          total_orders?: number
+          total_spent?: number
+          updated_at?: string | null
+        }
+        Relationships: []
       }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_employee_number: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      generate_order_number: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      generate_sale_number: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      is_admin_or_manager: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      employee_role: "admin" | "manager" | "staff" | "viewer"
+      order_status:
+        | "pending"
+        | "processing"
+        | "shipped"
+        | "delivered"
+        | "cancelled"
+      payment_status: "pending" | "paid" | "overdue" | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -540,6 +594,16 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      employee_role: ["admin", "manager", "staff", "viewer"],
+      order_status: [
+        "pending",
+        "processing",
+        "shipped",
+        "delivered",
+        "cancelled",
+      ],
+      payment_status: ["pending", "paid", "overdue", "cancelled"],
+    },
   },
 } as const
