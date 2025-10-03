@@ -12,7 +12,7 @@ import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { 
-  Settings, 
+  Settings as SettingsIcon, 
   Save, 
   RefreshCw,
   Bell,
@@ -99,7 +99,7 @@ const Settings = () => {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <Settings className="h-8 w-8 text-primary" />
+              <SettingsIcon className="h-8 w-8 text-primary" />
               <h1 className="text-2xl font-bold">System Settings</h1>
             </div>
             <div className="flex items-center space-x-4">
