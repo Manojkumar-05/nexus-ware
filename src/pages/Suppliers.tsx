@@ -10,6 +10,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { useSuppliers } from '@/hooks/useSuppliers';
+import { toast } from '@/hooks/use-toast';
 import { 
   Truck, 
   Plus, 
@@ -35,73 +37,53 @@ import {
 const Suppliers = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const { suppliers, loading, addSupplier, updateSupplier, deleteSupplier } = useSuppliers();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  
+  // Form state for new supplier
+  const [newSupplier, setNewSupplier] = useState({
+    name: '',
+    contact: '',
+    email: '',
+    phone: '',
+    address: '',
+    category: '',
+    status: 'active'
+  });
 
-  // Mock data for suppliers
-  const suppliers = [
-    {
-      id: "SUP-001",
-      name: "TechCorp Industries",
-      contact: "John Smith",
-      email: "john@techcorp.com",
-      phone: "+1-555-0123",
-      address: "123 Tech Street, Silicon Valley, CA",
-      category: "Electronics",
-      status: "active",
-      rating: 4.8,
-      totalOrders: 156,
-      totalSpent: 45000,
-      lastOrder: "2024-01-10",
-      reliability: "excellent"
-    },
-    {
-      id: "SUP-002",
-      name: "Global Materials Ltd",
-      contact: "Sarah Johnson",
-      email: "sarah@globalmaterials.com",
-      phone: "+1-555-0456",
-      address: "456 Industrial Ave, Chicago, IL",
-      category: "Raw Materials",
-      status: "active",
-      rating: 4.5,
-      totalOrders: 89,
-      totalSpent: 32000,
-      lastOrder: "2024-01-08",
-      reliability: "good"
-    },
-    {
-      id: "SUP-003",
-      name: "Quality Parts Co",
-      contact: "Mike Wilson",
-      email: "mike@qualityparts.com",
-      phone: "+1-555-0789",
-      address: "789 Quality Blvd, Detroit, MI",
-      category: "Automotive",
-      status: "inactive",
-      rating: 3.9,
-      totalOrders: 67,
-      totalSpent: 18000,
-      lastOrder: "2023-12-15",
-      reliability: "fair"
-    },
-    {
-      id: "SUP-004",
-      name: "Eco Supplies Inc",
-      contact: "Lisa Chen",
-      email: "lisa@ecosupplies.com",
-      phone: "+1-555-0321",
-      address: "321 Green Way, Portland, OR",
-      category: "Sustainable",
-      status: "active",
-      rating: 4.9,
-      totalOrders: 234,
-      totalSpent: 67000,
-      lastOrder: "2024-01-12",
-      reliability: "excellent"
+  const handleAddSupplier = async () => {
+    if (!newSupplier.name || !newSupplier.contact || !newSupplier.email || !newSupplier.phone) {
+      toast({
+        title: "Error",
+        description: "Please fill in all required fields",
+        variant: "destructive"
+      });
+      return;
     }
-  ];
+
+    const { error } = await addSupplier(newSupplier);
+    if (!error) {
+      setIsAddDialogOpen(false);
+      setNewSupplier({
+        name: '',
+        contact: '',
+        email: '',
+        phone: '',
+        address: '',
+        category: '',
+        status: 'active'
+      });
+    }
+  };
+
+  const handleDeleteSupplier = async (id: string) => {
+    if (confirm('Are you sure you want to delete this supplier?')) {
+      await deleteSupplier(id);
+    }
+  };
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
@@ -207,7 +189,7 @@ const Suppliers = () => {
               </p>
             </div>
           </div>
-          <Dialog>
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
               <Button className="mt-4 sm:mt-0">
                 <Plus className="mr-2 h-4 w-4" />
@@ -224,43 +206,51 @@ const Suppliers = () => {
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="name" className="text-right">
-                    Company Name
+                    Company Name *
                   </Label>
                   <Input
                     id="name"
                     placeholder="Supplier company name"
                     className="col-span-3"
+                    value={newSupplier.name}
+                    onChange={(e) => setNewSupplier({ ...newSupplier, name: e.target.value })}
                   />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="contact" className="text-right">
-                    Contact Person
+                    Contact Person *
                   </Label>
                   <Input
                     id="contact"
                     placeholder="Primary contact name"
                     className="col-span-3"
+                    value={newSupplier.contact}
+                    onChange={(e) => setNewSupplier({ ...newSupplier, contact: e.target.value })}
                   />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="email" className="text-right">
-                    Email
+                    Email *
                   </Label>
                   <Input
                     id="email"
                     type="email"
                     placeholder="contact@company.com"
                     className="col-span-3"
+                    value={newSupplier.email}
+                    onChange={(e) => setNewSupplier({ ...newSupplier, email: e.target.value })}
                   />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="phone" className="text-right">
-                    Phone
+                    Phone *
                   </Label>
                   <Input
                     id="phone"
                     placeholder="+1-555-0123"
                     className="col-span-3"
+                    value={newSupplier.phone}
+                    onChange={(e) => setNewSupplier({ ...newSupplier, phone: e.target.value })}
                   />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
@@ -271,30 +261,32 @@ const Suppliers = () => {
                     id="address"
                     placeholder="Full company address"
                     className="col-span-3"
+                    value={newSupplier.address}
+                    onChange={(e) => setNewSupplier({ ...newSupplier, address: e.target.value })}
                   />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="category" className="text-right">
                     Category
                   </Label>
-                  <Select>
+                  <Select value={newSupplier.category} onValueChange={(value) => setNewSupplier({ ...newSupplier, category: value })}>
                     <SelectTrigger className="col-span-3">
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="electronics">Electronics</SelectItem>
-                      <SelectItem value="raw-materials">Raw Materials</SelectItem>
-                      <SelectItem value="automotive">Automotive</SelectItem>
-                      <SelectItem value="sustainable">Sustainable</SelectItem>
-                      <SelectItem value="textiles">Textiles</SelectItem>
-                      <SelectItem value="chemicals">Chemicals</SelectItem>
+                      <SelectItem value="Electronics">Electronics</SelectItem>
+                      <SelectItem value="Raw Materials">Raw Materials</SelectItem>
+                      <SelectItem value="Automotive">Automotive</SelectItem>
+                      <SelectItem value="Sustainable">Sustainable</SelectItem>
+                      <SelectItem value="Textiles">Textiles</SelectItem>
+                      <SelectItem value="Chemicals">Chemicals</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
               <div className="flex justify-end space-x-2">
-                <Button variant="outline">Cancel</Button>
-                <Button>Add Supplier</Button>
+                <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Cancel</Button>
+                <Button onClick={handleAddSupplier}>Add Supplier</Button>
               </div>
             </DialogContent>
           </Dialog>
@@ -335,7 +327,7 @@ const Suppliers = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                ${suppliers.reduce((sum, s) => sum + s.totalSpent, 0).toLocaleString()}
+                ${suppliers.reduce((sum, s) => sum + s.total_spent, 0).toLocaleString()}
               </div>
               <p className="text-xs text-muted-foreground">
                 Across all suppliers
@@ -426,49 +418,64 @@ const Suppliers = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredSuppliers.map((supplier) => (
-                  <TableRow key={supplier.id}>
-                    <TableCell className="font-medium">{supplier.id}</TableCell>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">{supplier.name}</div>
-                        <div className="text-sm text-muted-foreground flex items-center">
-                          <Mail className="w-3 h-3 mr-1" />
-                          {supplier.email}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">{supplier.contact}</div>
-                        <div className="text-sm text-muted-foreground flex items-center">
-                          <Phone className="w-3 h-3 mr-1" />
-                          {supplier.phone}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{supplier.category}</Badge>
-                    </TableCell>
-                    <TableCell>{getRatingStars(supplier.rating)}</TableCell>
-                    <TableCell>{getStatusBadge(supplier.status)}</TableCell>
-                    <TableCell>{getReliabilityBadge(supplier.reliability)}</TableCell>
-                    <TableCell>${supplier.totalSpent.toLocaleString()}</TableCell>
-                    <TableCell>
-                      <div className="flex space-x-2">
-                        <Button variant="ghost" size="sm">
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={9} className="text-center py-8">Loading suppliers...</TableCell>
                   </TableRow>
-                ))}
+                ) : filteredSuppliers.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={9} className="text-center py-8">No suppliers found</TableCell>
+                  </TableRow>
+                ) : (
+                  filteredSuppliers.map((supplier) => (
+                    <TableRow key={supplier.id}>
+                      <TableCell className="font-medium">{supplier.id}</TableCell>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">{supplier.name}</div>
+                          <div className="text-sm text-muted-foreground flex items-center">
+                            <Mail className="w-3 h-3 mr-1" />
+                            {supplier.email}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">{supplier.contact}</div>
+                          <div className="text-sm text-muted-foreground flex items-center">
+                            <Phone className="w-3 h-3 mr-1" />
+                            {supplier.phone}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{supplier.category}</Badge>
+                      </TableCell>
+                      <TableCell>{getRatingStars(supplier.rating)}</TableCell>
+                      <TableCell>{getStatusBadge(supplier.status)}</TableCell>
+                      <TableCell>{getReliabilityBadge(supplier.reliability)}</TableCell>
+                      <TableCell>${supplier.total_spent.toLocaleString()}</TableCell>
+                      <TableCell>
+                        <div className="flex space-x-2">
+                          <Button variant="ghost" size="sm" title="View details">
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm" title="Edit supplier">
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            title="Delete supplier"
+                            onClick={() => handleDeleteSupplier(supplier.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </CardContent>
