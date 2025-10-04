@@ -13,6 +13,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useOrg } from '@/contexts/OrgContext';
 import ChangeOrgDialog from '@/components/ChangeOrgDialog';
 import { useNavigate } from 'react-router-dom';
+import { useInventory } from '@/hooks/useInventory';
 import { 
   Package, 
   Plus, 
@@ -24,15 +25,9 @@ import {
   AlertTriangle,
   CheckCircle,
   Clock,
-  TrendingUp,
-  TrendingDown,
   Minus,
   Plus as PlusIcon,
-  BarChart3,
   IndianRupee as DollarSign,
-  Hash,
-  MapPin,
-  Calendar
 } from 'lucide-react';
 import { formatINR, usdToInr } from '@/utils/currency';
 
@@ -40,81 +35,61 @@ const Inventory = () => {
   const { user, signOut } = useAuth();
   const { organizationName } = useOrg();
   const navigate = useNavigate();
+  const { inventory, loading, addItem, deleteItem, addStock } = useInventory();
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isStockDialogOpen, setIsStockDialogOpen] = useState(false);
+  
+  // Form state for adding items
+  const [formData, setFormData] = useState({
+    name: '',
+    sku: '',
+    category: '',
+    description: '',
+    quantity: 0,
+    min_quantity: 0,
+    max_quantity: 0,
+    unit_price: 0,
+    supplier: '',
+    location: '',
+    status: 'in-stock',
+    reorder_point: 0
+  });
 
-  // Mock data for inventory items
-  const inventory = [
-    {
-      id: "INV-001",
-      name: "Laptop Dell XPS 13",
-      sku: "DELL-XPS13-2024",
-      category: "Electronics",
-      description: "13-inch premium laptop with Intel i7 processor",
-      quantity: 45,
-      minQuantity: 10,
-      maxQuantity: 100,
-      unitPrice: 1299.99,
-      supplier: "TechCorp Industries",
-      location: "Warehouse A - Shelf 1",
-      status: "in-stock",
-      lastUpdated: "2024-01-15",
-      reorderPoint: 15,
-      totalValue: 58499.55
-    },
-    {
-      id: "INV-002",
-      name: "Wireless Mouse Logitech MX Master",
-      sku: "LOG-MXMASTER-3",
-      category: "Electronics",
-      description: "Premium wireless mouse with precision tracking",
-      quantity: 8,
-      minQuantity: 20,
-      maxQuantity: 150,
-      unitPrice: 79.99,
-      supplier: "TechCorp Industries",
-      location: "Warehouse A - Shelf 2",
-      status: "low-stock",
-      lastUpdated: "2024-01-14",
-      reorderPoint: 20,
-      totalValue: 639.92
-    },
-    {
-      id: "INV-003",
-      name: "Steel Office Chair",
-      sku: "OFF-CHAIR-STEEL",
-      category: "Furniture",
-      description: "Ergonomic office chair with adjustable features",
+  // Form state for adding stock
+  const [stockFormData, setStockFormData] = useState({
+    item_id: '',
+    quantity: 0
+  });
+
+  const handleAddItem = async () => {
+    await addItem(formData);
+    setIsAddDialogOpen(false);
+    setFormData({
+      name: '',
+      sku: '',
+      category: '',
+      description: '',
       quantity: 0,
-      minQuantity: 5,
-      maxQuantity: 50,
-      unitPrice: 299.99,
-      supplier: "Global Materials Ltd",
-      location: "Warehouse B - Shelf 3",
-      status: "out-of-stock",
-      lastUpdated: "2024-01-10",
-      reorderPoint: 5,
-      totalValue: 0
-    },
-    {
-      id: "INV-004",
-      name: "LED Desk Lamp",
-      sku: "LIGHT-LED-DESK",
-      category: "Lighting",
-      description: "Adjustable LED desk lamp with touch controls",
-      quantity: 67,
-      minQuantity: 15,
-      maxQuantity: 200,
-      unitPrice: 49.99,
-      supplier: "Eco Supplies Inc",
-      location: "Warehouse A - Shelf 4",
-      status: "in-stock",
-      lastUpdated: "2024-01-12",
-      reorderPoint: 15,
-      totalValue: 3349.33
+      min_quantity: 0,
+      max_quantity: 0,
+      unit_price: 0,
+      supplier: '',
+      location: '',
+      status: 'in-stock',
+      reorder_point: 0
+    });
+  };
+
+  const handleAddStock = async () => {
+    if (stockFormData.item_id && stockFormData.quantity > 0) {
+      await addStock(stockFormData.item_id, stockFormData.quantity);
+      setIsStockDialogOpen(false);
+      setStockFormData({ item_id: '', quantity: 0 });
     }
-  ];
+  };
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
@@ -136,24 +111,17 @@ const Inventory = () => {
   };
 
   const getStockLevel = (item: any) => {
-    const percentage = (item.quantity / item.maxQuantity) * 100;
-    let color = "bg-green-500";
-    
-    if (item.quantity <= item.reorderPoint) {
-      color = "bg-red-500";
-    } else if (item.quantity <= item.minQuantity) {
-      color = "bg-yellow-500";
-    }
+    const percentage = (item.quantity / item.max_quantity) * 100;
     
     return (
       <div className="w-full">
         <div className="flex justify-between text-sm mb-1">
-          <span>{item.quantity} / {item.maxQuantity}</span>
+          <span>{item.quantity} / {item.max_quantity}</span>
           <span>{percentage.toFixed(0)}%</span>
         </div>
         <Progress value={percentage} className="h-2" />
         <div className="text-xs text-muted-foreground mt-1">
-          Reorder at: {item.reorderPoint}
+          Reorder at: {item.reorder_point}
         </div>
       </div>
     );
@@ -168,9 +136,13 @@ const Inventory = () => {
     return matchesSearch && matchesCategory && matchesStatus;
   });
 
-  const totalInventoryValue = inventory.reduce((sum, item) => sum + item.totalValue, 0);
-  const lowStockItems = inventory.filter(item => item.quantity <= item.reorderPoint).length;
+  const totalInventoryValue = inventory.reduce((sum, item) => sum + item.total_value, 0);
+  const lowStockItems = inventory.filter(item => item.quantity <= item.reorder_point).length;
   const outOfStockItems = inventory.filter(item => item.quantity === 0).length;
+
+  if (loading) {
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -210,7 +182,7 @@ const Inventory = () => {
             </div>
           </div>
           <div className="flex space-x-2 mt-4 sm:mt-0">
-            <Dialog>
+            <Dialog open={isStockDialogOpen} onOpenChange={setIsStockDialogOpen}>
               <DialogTrigger asChild>
                 <Button variant="outline">
                   <PlusIcon className="mr-2 h-4 w-4" />
@@ -229,7 +201,7 @@ const Inventory = () => {
                     <Label htmlFor="item" className="text-right">
                       Item
                     </Label>
-                    <Select>
+                    <Select value={stockFormData.item_id} onValueChange={(value) => setStockFormData({ ...stockFormData, item_id: value })}>
                       <SelectTrigger className="col-span-3">
                         <SelectValue placeholder="Select item" />
                       </SelectTrigger>
@@ -251,16 +223,18 @@ const Inventory = () => {
                       type="number"
                       placeholder="Amount to add"
                       className="col-span-3"
+                      value={stockFormData.quantity}
+                      onChange={(e) => setStockFormData({ ...stockFormData, quantity: parseInt(e.target.value) || 0 })}
                     />
                   </div>
                 </div>
                 <div className="flex justify-end space-x-2">
-                  <Button variant="outline">Cancel</Button>
-                  <Button>Add Stock</Button>
+                  <Button variant="outline" onClick={() => setIsStockDialogOpen(false)}>Cancel</Button>
+                  <Button onClick={handleAddStock}>Add Stock</Button>
                 </div>
               </DialogContent>
             </Dialog>
-            <Dialog>
+            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
               <DialogTrigger asChild>
                 <Button>
                   <Plus className="mr-2 h-4 w-4" />
@@ -283,6 +257,8 @@ const Inventory = () => {
                       id="name"
                       placeholder="Product name"
                       className="col-span-3"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     />
                   </div>
                   <div className="grid grid-cols-4 items-center gap-4">
@@ -293,23 +269,21 @@ const Inventory = () => {
                       id="sku"
                       placeholder="Stock keeping unit"
                       className="col-span-3"
+                      value={formData.sku}
+                      onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
                     />
                   </div>
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="category" className="text-right">
                       Category
                     </Label>
-                    <Select>
-                      <SelectTrigger className="col-span-3">
-                        <SelectValue placeholder="Select category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="electronics">Electronics</SelectItem>
-                        <SelectItem value="furniture">Furniture</SelectItem>
-                        <SelectItem value="lighting">Lighting</SelectItem>
-                        <SelectItem value="office-supplies">Office Supplies</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Input
+                      id="category"
+                      placeholder="Category"
+                      className="col-span-3"
+                      value={formData.category}
+                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                    />
                   </div>
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="description" className="text-right">
@@ -319,6 +293,8 @@ const Inventory = () => {
                       id="description"
                       placeholder="Product description"
                       className="col-span-3"
+                      value={formData.description}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     />
                   </div>
                   <div className="grid grid-cols-4 items-center gap-4">
@@ -330,6 +306,8 @@ const Inventory = () => {
                       type="number"
                       placeholder="0"
                       className="col-span-3"
+                      value={formData.quantity}
+                      onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 0 })}
                     />
                   </div>
                   <div className="grid grid-cols-4 items-center gap-4">
@@ -342,12 +320,38 @@ const Inventory = () => {
                       step="0.01"
                       placeholder="0.00"
                       className="col-span-3"
+                      value={formData.unit_price}
+                      onChange={(e) => setFormData({ ...formData, unit_price: parseFloat(e.target.value) || 0 })}
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="supplier" className="text-right">
+                      Supplier
+                    </Label>
+                    <Input
+                      id="supplier"
+                      placeholder="Supplier name"
+                      className="col-span-3"
+                      value={formData.supplier}
+                      onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="location" className="text-right">
+                      Location
+                    </Label>
+                    <Input
+                      id="location"
+                      placeholder="Storage location"
+                      className="col-span-3"
+                      value={formData.location}
+                      onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                     />
                   </div>
                 </div>
                 <div className="flex justify-end space-x-2">
-                  <Button variant="outline">Cancel</Button>
-                  <Button>Add Item</Button>
+                  <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Cancel</Button>
+                  <Button onClick={handleAddItem}>Add Item</Button>
                 </div>
               </DialogContent>
             </Dialog>
@@ -444,7 +448,6 @@ const Inventory = () => {
                   <SelectItem value="in-stock">In Stock</SelectItem>
                   <SelectItem value="low-stock">Low Stock</SelectItem>
                   <SelectItem value="out-of-stock">Out of Stock</SelectItem>
-                  <SelectItem value="discontinued">Discontinued</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -456,52 +459,33 @@ const Inventory = () => {
           <CardHeader>
             <CardTitle>Inventory Items</CardTitle>
             <CardDescription>
-              Complete list of all inventory items with stock levels and details
+              Complete list of all products with stock levels and values
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Item ID</TableHead>
                   <TableHead>Product</TableHead>
+                  <TableHead>SKU</TableHead>
                   <TableHead>Category</TableHead>
                   <TableHead>Stock Level</TableHead>
                   <TableHead>Unit Price</TableHead>
                   <TableHead>Total Value</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Location</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredInventory.map((item) => (
                   <TableRow key={item.id}>
-                    <TableCell className="font-medium">{item.id}</TableCell>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">{item.name}</div>
-                        <div className="text-sm text-muted-foreground">{item.sku}</div>
-                        <div className="text-xs text-muted-foreground truncate max-w-[200px]">
-                          {item.description}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{item.category}</Badge>
-                    </TableCell>
-                    <TableCell className="w-[200px]">
-                      {getStockLevel(item)}
-                    </TableCell>
-                    <TableCell>{formatINR(usdToInr(item.unitPrice))}</TableCell>
-                    <TableCell>{formatINR(usdToInr(item.totalValue))}</TableCell>
+                    <TableCell className="font-medium">{item.name}</TableCell>
+                    <TableCell>{item.sku}</TableCell>
+                    <TableCell>{item.category}</TableCell>
+                    <TableCell className="min-w-[200px]">{getStockLevel(item)}</TableCell>
+                    <TableCell>{formatINR(usdToInr(item.unit_price))}</TableCell>
+                    <TableCell>{formatINR(usdToInr(item.total_value))}</TableCell>
                     <TableCell>{getStatusBadge(item.status)}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center text-sm text-muted-foreground">
-                        <MapPin className="w-3 h-3 mr-1" />
-                        {item.location}
-                      </div>
-                    </TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
                         <Button variant="ghost" size="sm">
@@ -510,7 +494,7 @@ const Inventory = () => {
                         <Button variant="ghost" size="sm">
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm">
+                        <Button variant="ghost" size="sm" onClick={() => deleteItem(item.id)}>
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
@@ -519,82 +503,6 @@ const Inventory = () => {
                 ))}
               </TableBody>
             </Table>
-          </CardContent>
-        </Card>
-
-        {/* Inventory Analytics */}
-        <Card className="mt-8">
-          <CardHeader>
-            <CardTitle>Inventory Analytics</CardTitle>
-            <CardDescription>
-              Insights and trends for your inventory management
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="space-y-4">
-                <h4 className="font-medium">Category Distribution</h4>
-                <div className="space-y-3">
-                  {Array.from(new Set(inventory.map(item => item.category))).map(category => {
-                    const items = inventory.filter(item => item.category === category);
-                    const totalValue = items.reduce((sum, item) => sum + item.totalValue, 0);
-                    return (
-                      <div key={category} className="flex items-center justify-between">
-                        <span className="text-sm">{category}</span>
-                        <div className="text-right">
-                          <div className="text-sm font-medium">{items.length} items</div>
-                          <div className="text-xs text-muted-foreground">{formatINR(usdToInr(totalValue))}</div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-              
-              <div className="space-y-4">
-                <h4 className="font-medium">Stock Status Overview</h4>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">In Stock</span>
-                    <Badge variant="secondary">
-                      {inventory.filter(item => item.status === 'in-stock').length}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Low Stock</span>
-                    <Badge variant="secondary">
-                      {inventory.filter(item => item.status === 'low-stock').length}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Out of Stock</span>
-                    <Badge variant="secondary">
-                      {inventory.filter(item => item.status === 'out-of-stock').length}
-                    </Badge>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="space-y-4">
-                <h4 className="font-medium">Top Value Items</h4>
-                <div className="space-y-3">
-                  {inventory
-                    .sort((a, b) => b.totalValue - a.totalValue)
-                    .slice(0, 3)
-                    .map((item, index) => (
-                      <div key={item.id} className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <Badge variant="outline" className="w-6 h-6 p-0 flex items-center justify-center">
-                            {index + 1}
-                          </Badge>
-                          <span className="text-sm truncate max-w-[120px]">{item.name}</span>
-                        </div>
-                        <span className="text-sm font-medium">{formatINR(usdToInr(item.totalValue))}</span>
-                      </div>
-                    ))}
-                </div>
-              </div>
-            </div>
           </CardContent>
         </Card>
       </div>
