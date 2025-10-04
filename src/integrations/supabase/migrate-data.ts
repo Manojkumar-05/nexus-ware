@@ -632,7 +632,7 @@ async function createTables() {
   
   for (const sql of createTablesSQL) {
     try {
-      const { error } = await supabase.rpc('exec_sql', { sql });
+      const { error } = await (supabase.rpc as any)('exec_sql', { sql });
       if (error) {
         console.log('Note: exec_sql RPC not available, tables may already exist');
         break;
@@ -658,7 +658,7 @@ async function insertData() {
     try {
       const { data, error } = await supabase
         .from(table)
-        .insert(mockData[table]);
+        .insert(mockData[table] as any);
       
       if (error) {
         if (error.code === '23505') { // Unique violation
@@ -702,7 +702,7 @@ export async function checkDataExists() {
   for (const table of tables) {
     try {
       const { data, error } = await supabase
-        .from(table)
+        .from(table as any)
         .select('id')
         .limit(1);
       
