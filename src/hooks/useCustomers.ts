@@ -56,6 +56,7 @@ export const useCustomers = () => {
       const { data, error } = await supabase
         .from('customers')
         .insert({
+          id: crypto.randomUUID(),
           ...customer,
           total_orders: 0,
           total_spent: 0,

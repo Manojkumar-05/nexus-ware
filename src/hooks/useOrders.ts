@@ -44,7 +44,10 @@ export const useOrders = () => {
     try {
       const { data, error } = await supabase
         .from('orders')
-        .insert(order as any)
+        .insert({
+          id: crypto.randomUUID(),
+          ...order
+        } as any)
         .select()
         .single();
 

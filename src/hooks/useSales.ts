@@ -50,7 +50,10 @@ export const useSales = () => {
     try {
       const { data, error } = await supabase
         .from('sales')
-        .insert(sale as any)
+        .insert({
+          id: crypto.randomUUID(),
+          ...sale
+        } as any)
         .select()
         .single();
 

@@ -51,6 +51,7 @@ export const useSuppliers = () => {
       const { data, error } = await supabase
         .from('suppliers')
         .insert({
+          id: crypto.randomUUID(),
           ...supplier,
           rating: 0,
           total_orders: 0,

@@ -53,7 +53,12 @@ export const useInventory = () => {
       const total_value = item.quantity * item.unit_price;
       const { data, error } = await supabase
         .from('inventory')
-        .insert({ ...item, total_value, last_updated: new Date().toISOString().split('T')[0] } as any)
+        .insert({ 
+          id: crypto.randomUUID(),
+          ...item, 
+          total_value, 
+          last_updated: new Date().toISOString().split('T')[0] 
+        } as any)
         .select()
         .single();
 
