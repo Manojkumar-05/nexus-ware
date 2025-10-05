@@ -14,6 +14,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useOrg } from '@/contexts/OrgContext';
 import ChangeOrgDialog from '@/components/ChangeOrgDialog';
 import { useNavigate } from 'react-router-dom';
+import { useCustomers } from '@/hooks/useCustomers';
 import { 
   Users, 
   Plus, 
@@ -42,12 +43,52 @@ const Customers = () => {
   const { user, signOut } = useAuth();
   const { organizationName } = useOrg();
   const navigate = useNavigate();
+  const { customers, loading, addCustomer, deleteCustomer } = useCustomers();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [tierFilter, setTierFilter] = useState('all');
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    company: '',
+    address: '',
+    tier: 'bronze',
+    status: 'active',
+    avatar: '',
+    tags: [],
+    notes: ''
+  });
 
-  // Mock data for customers
-  const customers = [
+  const handleAddCustomer = async () => {
+    await addCustomer(formData);
+    setIsDialogOpen(false);
+    setFormData({
+      name: '',
+      email: '',
+      phone: '',
+      company: '',
+      address: '',
+      tier: 'bronze',
+      status: 'active',
+      avatar: '',
+      tags: [],
+      notes: ''
+    });
+  };
+
+  const handleDelete = async (id: string) => {
+    if (confirm('Are you sure you want to delete this customer?')) {
+      await deleteCustomer(id);
+    }
+  };
+
+  if (loading) {
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  }
+
+  const mockCustomers = [
     {
       id: "CUST-001",
       name: "John Smith",
@@ -167,8 +208,8 @@ const Customers = () => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
   };
 
-  const getCustomerLifetime = (customerSince: string) => {
-    const start = new Date(customerSince);
+  const getCustomerLifetime = (customer_since: string) => {
+    const start = new Date(customer_since);
     const now = new Date();
     const diffTime = Math.abs(now.getTime() - start.getTime());
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -186,7 +227,7 @@ const Customers = () => {
 
   const totalCustomers = customers.length;
   const activeCustomers = customers.filter(cust => cust.status === 'active').length;
-  const totalRevenue = customers.reduce((sum, cust) => sum + cust.totalSpent, 0);
+  const totalRevenue = customers.reduce((sum, cust) => sum + cust.total_spent, 0);
   const avgCustomerValue = totalRevenue / totalCustomers;
 
   return (
@@ -392,7 +433,7 @@ const Customers = () => {
               {['bronze', 'silver', 'gold', 'platinum'].map(tier => {
                 const tierCustomers = customers.filter(cust => cust.tier === tier);
                 const count = tierCustomers.length;
-                const totalValue = tierCustomers.reduce((sum, cust) => sum + cust.totalSpent, 0);
+                const totalValue = tierCustomers.reduce((sum, cust) => sum + cust.total_spent, 0);
                 const percentage = (count / totalCustomers) * 100;
                 
                 return (
@@ -513,23 +554,23 @@ const Customers = () => {
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
                           <span className="text-sm">Orders:</span>
-                          <span className="font-medium">{customer.totalOrders}</span>
+                          <span className="font-medium">{customer.total_orders}</span>
                         </div>
                         <div className="flex items-center justify-between">
                           <span className="text-sm">Total:</span>
-                          <span className="font-medium">{formatINR(usdToInr(customer.totalSpent))}</span>
+                          <span className="font-medium">{formatINR(usdToInr(customer.total_spent))}</span>
                         </div>
                         <div className="flex items-center justify-between">
                           <span className="text-sm">Avg:</span>
-                          <span className="text-sm text-muted-foreground">{formatINR(usdToInr(customer.avgOrderValue))}</span>
+                          <span className="text-sm text-muted-foreground">{formatINR(usdToInr(customer.avg_order_value))}</span>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell>{getStatusBadge(customer.status)}</TableCell>
                     <TableCell>
-                      <div className="text-sm">{customer.customerSince}</div>
+                      <div className="text-sm">{customer.customer_since}</div>
                       <div className="text-xs text-muted-foreground">
-                        {getCustomerLifetime(customer.customerSince)} days
+                        {getCustomerLifetime(customer.customer_since)} days
                       </div>
                     </TableCell>
                     <TableCell>
@@ -569,7 +610,7 @@ const Customers = () => {
                 <h4 className="font-medium">Top Customers by Value</h4>
                 <div className="space-y-3">
                   {customers
-                    .sort((a, b) => b.totalSpent - a.totalSpent)
+                    .sort((a, b) => b.total_spent - a.total_spent)
                     .slice(0, 3)
                     .map((customer, index) => (
                       <div key={customer.id} className="flex items-center justify-between p-2 border rounded">
@@ -580,8 +621,8 @@ const Customers = () => {
                           <span className="text-sm font-medium">{customer.name}</span>
                         </div>
                         <div className="text-right">
-                          <div className="text-sm font-medium">{formatINR(usdToInr(customer.totalSpent))}</div>
-                          <div className="text-xs text-muted-foreground">{customer.totalOrders} orders</div>
+                          <div className="text-sm font-medium">{formatINR(usdToInr(customer.total_spent))}</div>
+                          <div className="text-xs text-muted-foreground">{customer.total_orders} orders</div>
                         </div>
                       </div>
                     ))}
@@ -595,10 +636,10 @@ const Customers = () => {
                     <span className="text-sm">Recent (30 days)</span>
                     <Badge variant="secondary">
                       {customers.filter(cust => {
-                        const lastOrder = new Date(cust.lastOrder);
+                        const last_order = new Date(cust.last_order);
                         const thirtyDaysAgo = new Date();
                         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-                        return lastOrder > thirtyDaysAgo;
+                        return last_order > thirtyDaysAgo;
                       }).length}
                     </Badge>
                   </div>
@@ -606,10 +647,10 @@ const Customers = () => {
                     <span className="text-sm">Active (90 days)</span>
                     <Badge variant="secondary">
                       {customers.filter(cust => {
-                        const lastOrder = new Date(cust.lastOrder);
+                        const last_order = new Date(cust.last_order);
                         const ninetyDaysAgo = new Date();
                         ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
-                        return lastOrder > ninetyDaysAgo;
+                        return last_order > ninetyDaysAgo;
                       }).length}
                     </Badge>
                   </div>
@@ -617,10 +658,10 @@ const Customers = () => {
                     <span className="text-sm">Inactive (&gt;90 days)</span>
                     <Badge variant="secondary">
                       {customers.filter(cust => {
-                        const lastOrder = new Date(cust.lastOrder);
+                        const last_order = new Date(cust.last_order);
                         const ninetyDaysAgo = new Date();
                         ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
-                        return lastOrder <= ninetyDaysAgo;
+                        return last_order <= ninetyDaysAgo;
                       }).length}
                     </Badge>
                   </div>
@@ -634,11 +675,11 @@ const Customers = () => {
                     <div className="flex items-center justify-between">
                       <span className="text-sm">High Engagement</span>
                       <span className="text-sm font-medium">
-                        {customers.filter(cust => cust.totalOrders >= 8).length}
+                        {customers.filter(cust => cust.total_orders >= 8).length}
                       </span>
                     </div>
                     <Progress 
-                      value={(customers.filter(cust => cust.totalOrders >= 8).length / customers.length) * 100} 
+                      value={(customers.filter(cust => cust.total_orders >= 8).length / customers.length) * 100} 
                       className="h-2"
                     />
                   </div>
@@ -646,11 +687,11 @@ const Customers = () => {
                     <div className="flex items-center justify-between">
                       <span className="text-sm">Medium Engagement</span>
                       <span className="text-sm font-medium">
-                        {customers.filter(cust => cust.totalOrders >= 4 && cust.totalOrders < 8).length}
+                        {customers.filter(cust => cust.total_orders >= 4 && cust.total_orders < 8).length}
                       </span>
                     </div>
                     <Progress 
-                      value={(customers.filter(cust => cust.totalOrders >= 4 && cust.totalOrders < 8).length / customers.length) * 100} 
+                      value={(customers.filter(cust => cust.total_orders >= 4 && cust.total_orders < 8).length / customers.length) * 100} 
                       className="h-2"
                     />
                   </div>
@@ -658,11 +699,11 @@ const Customers = () => {
                     <div className="flex items-center justify-between">
                       <span className="text-sm">Low Engagement</span>
                       <span className="text-sm font-medium">
-                        {customers.filter(cust => cust.totalOrders < 4).length}
+                        {customers.filter(cust => cust.total_orders < 4).length}
                       </span>
                     </div>
                     <Progress 
-                      value={(customers.filter(cust => cust.totalOrders < 4).length / customers.length) * 100} 
+                      value={(customers.filter(cust => cust.total_orders < 4).length / customers.length) * 100} 
                       className="h-2"
                     />
                   </div>

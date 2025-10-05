@@ -14,6 +14,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useOrg } from '@/contexts/OrgContext';
 import ChangeOrgDialog from '@/components/ChangeOrgDialog';
 import { useNavigate } from 'react-router-dom';
+import { useEmployees } from '@/hooks/useEmployees';
 import { 
   UserCheck, 
   Plus, 
@@ -42,12 +43,58 @@ const Employees = () => {
   const { user, signOut } = useAuth();
   const { organizationName } = useOrg();
   const navigate = useNavigate();
+  const { employees, loading, addEmployee, deleteEmployee } = useEmployees();
   const [searchTerm, setSearchTerm] = useState('');
   const [departmentFilter, setDepartmentFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    position: '',
+    department: '',
+    salary: 0,
+    address: '',
+    status: 'active',
+    hire_date: new Date().toISOString().split('T')[0],
+    avatar: '',
+    manager: '',
+    skills: [],
+    achievements: []
+  });
 
-  // Mock data for employees
-  const employees = [
+  const handleAddEmployee = async () => {
+    await addEmployee(formData);
+    setIsDialogOpen(false);
+    setFormData({
+      name: '',
+      email: '',
+      phone: '',
+      position: '',
+      department: '',
+      salary: 0,
+      address: '',
+      status: 'active',
+      hire_date: new Date().toISOString().split('T')[0],
+      avatar: '',
+      manager: '',
+      skills: [],
+      achievements: []
+    });
+  };
+
+  const handleDelete = async (id: string) => {
+    if (confirm('Are you sure you want to delete this employee?')) {
+      await deleteEmployee(id);
+    }
+  };
+
+  if (loading) {
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  }
+
+  const mockEmployees = [
     {
       id: "EMP-001",
       name: "Sarah Johnson",
@@ -464,7 +511,7 @@ const Employees = () => {
                       <div>
                         <div className="font-medium">{employee.position}</div>
                         <div className="text-sm text-muted-foreground">
-                          Hired: {employee.hireDate}
+                          Hired: {employee.hire_date}
                         </div>
                       </div>
                     </TableCell>

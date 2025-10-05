@@ -13,6 +13,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useOrg } from '@/contexts/OrgContext';
 import ChangeOrgDialog from '@/components/ChangeOrgDialog';
 import { useNavigate } from 'react-router-dom';
+import { useSales } from '@/hooks/useSales';
 import { 
   TrendingUp, 
   Plus, 
@@ -43,12 +44,56 @@ const Sales = () => {
   const { user, signOut } = useAuth();
   const { organizationName } = useOrg();
   const navigate = useNavigate();
+  const { sales, loading, addSale, deleteSale } = useSales();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('all');
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    customer: '',
+    customer_email: '',
+    customer_phone: '',
+    items: [],
+    total: 0,
+    status: 'pending',
+    date: new Date().toISOString().split('T')[0],
+    time: new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }),
+    payment_method: 'Credit Card',
+    salesperson: '',
+    location: '',
+    notes: ''
+  });
 
-  // Mock data for sales
-  const sales = [
+  const handleAddSale = async () => {
+    await addSale(formData);
+    setIsDialogOpen(false);
+    setFormData({
+      customer: '',
+      customer_email: '',
+      customer_phone: '',
+      items: [],
+      total: 0,
+      status: 'pending',
+      date: new Date().toISOString().split('T')[0],
+      time: new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }),
+      payment_method: 'Credit Card',
+      salesperson: '',
+      location: '',
+      notes: ''
+    });
+  };
+
+  const handleDelete = async (id: string) => {
+    if (confirm('Are you sure you want to delete this sale?')) {
+      await deleteSale(id);
+    }
+  };
+
+  if (loading) {
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  }
+
+  const mockSales = [
     {
       id: "SALE-001",
       customer: "John Smith",
@@ -145,9 +190,9 @@ const Sales = () => {
 
   const getPaymentMethodIcon = (method: string) => {
     const methodConfig = {
-      'Credit Card': { icon: CreditCard, color: "text-blue-600" },
-      'PayPal': { icon: CreditCard, color: "text-blue-500" },
-      'Bank Transfer': { icon: CreditCard, color: "text-green-600" },
+      'Credit Card': { icon: DollarSign, color: "text-blue-600" },
+      'PayPal': { icon: DollarSign, color: "text-blue-500" },
+      'Bank Transfer': { icon: DollarSign, color: "text-green-600" },
       'Cash': { icon: DollarSign, color: "text-green-600" }
     };
     
@@ -160,7 +205,7 @@ const Sales = () => {
   const filteredSales = sales.filter(sale => {
     const matchesSearch = sale.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          sale.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         sale.customerEmail.toLowerCase().includes(searchTerm.toLowerCase());
+                         sale.customer_email.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || sale.status === statusFilter;
     const matchesDate = dateFilter === 'all' || sale.date === dateFilter;
     return matchesSearch && matchesStatus && matchesDate;
@@ -218,7 +263,7 @@ const Sales = () => {
               </p>
             </div>
           </div>
-          <Dialog>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button className="mt-4 sm:mt-0">
                 <Plus className="mr-2 h-4 w-4" />
@@ -241,6 +286,8 @@ const Sales = () => {
                     id="customer"
                     placeholder="Customer name"
                     className="col-span-3"
+                    value={formData.customer}
+                    onChange={(e) => setFormData({...formData, customer: e.target.value})}
                   />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
@@ -252,6 +299,8 @@ const Sales = () => {
                     type="email"
                     placeholder="customer@email.com"
                     className="col-span-3"
+                    value={formData.customer_email}
+                    onChange={(e) => setFormData({...formData, customer_email: e.target.value})}
                   />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
@@ -262,16 +311,8 @@ const Sales = () => {
                     id="phone"
                     placeholder="+1-555-0123"
                     className="col-span-3"
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="items" className="text-right">
-                    Items
-                  </Label>
-                  <Textarea
-                    id="items"
-                    placeholder="List items and quantities"
-                    className="col-span-3"
+                    value={formData.customer_phone}
+                    onChange={(e) => setFormData({...formData, customer_phone: e.target.value})}
                   />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
@@ -284,28 +325,30 @@ const Sales = () => {
                     step="0.01"
                     placeholder="0.00"
                     className="col-span-3"
+                    value={formData.total}
+                    onChange={(e) => setFormData({...formData, total: parseFloat(e.target.value) || 0})}
                   />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="payment" className="text-right">
                     Payment Method
                   </Label>
-                  <Select>
+                  <Select value={formData.payment_method} onValueChange={(value) => setFormData({...formData, payment_method: value})}>
                     <SelectTrigger className="col-span-3">
                       <SelectValue placeholder="Select payment method" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="credit-card">Credit Card</SelectItem>
-                      <SelectItem value="paypal">PayPal</SelectItem>
-                      <SelectItem value="bank-transfer">Bank Transfer</SelectItem>
-                      <SelectItem value="cash">Cash</SelectItem>
+                      <SelectItem value="Credit Card">Credit Card</SelectItem>
+                      <SelectItem value="PayPal">PayPal</SelectItem>
+                      <SelectItem value="Bank Transfer">Bank Transfer</SelectItem>
+                      <SelectItem value="Cash">Cash</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
               <div className="flex justify-end space-x-2">
-                <Button variant="outline">Cancel</Button>
-                <Button>Create Sale</Button>
+                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
+                <Button onClick={handleAddSale}>Create Sale</Button>
               </div>
             </DialogContent>
           </Dialog>
@@ -471,11 +514,11 @@ const Sales = () => {
                         <div className="font-medium">{sale.customer}</div>
                         <div className="text-sm text-muted-foreground flex items-center">
                           <Mail className="w-3 h-3 mr-1" />
-                          {sale.customerEmail}
+                          {sale.customer_email}
                         </div>
                         <div className="text-sm text-muted-foreground flex items-center">
                           <Phone className="w-3 h-3 mr-1" />
-                          {sale.customerPhone}
+                          {sale.customer_phone}
                         </div>
                       </div>
                     </TableCell>
@@ -494,8 +537,8 @@ const Sales = () => {
                     <TableCell>{getStatusBadge(sale.status)}</TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-2">
-                        {getPaymentMethodIcon(sale.paymentMethod)}
-                        <span className="text-sm">{sale.paymentMethod}</span>
+                        {getPaymentMethodIcon(sale.payment_method)}
+                        <span className="text-sm">{sale.payment_method}</span>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -514,7 +557,7 @@ const Sales = () => {
                         <Button variant="ghost" size="sm">
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm">
+                        <Button variant="ghost" size="sm" onClick={() => handleDelete(sale.id)}>
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
@@ -559,8 +602,8 @@ const Sales = () => {
               <div className="space-y-4">
                 <h4 className="font-medium">Payment Method Distribution</h4>
                 <div className="space-y-3">
-                  {Array.from(new Set(sales.map(sale => sale.paymentMethod))).map(method => {
-                    const count = sales.filter(sale => sale.paymentMethod === method).length;
+                  {Array.from(new Set(sales.map(sale => sale.payment_method))).map(method => {
+                    const count = sales.filter(sale => sale.payment_method === method).length;
                     const percentage = (count / sales.length) * 100;
                     return (
                       <div key={method} className="flex items-center justify-between">

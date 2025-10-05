@@ -12,6 +12,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useOrg } from '@/contexts/OrgContext';
 import ChangeOrgDialog from '@/components/ChangeOrgDialog';
 import { useNavigate } from 'react-router-dom';
+import { useOrders } from '@/hooks/useOrders';
 import { 
   ShoppingCart, 
   Plus, 
@@ -35,48 +36,37 @@ const Orders = () => {
   const { user, signOut } = useAuth();
   const { organizationName } = useOrg();
   const navigate = useNavigate();
+  const { orders, loading, addOrder, deleteOrder } = useOrders();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    customer: '',
+    items: 0,
+    total: 0,
+    priority: 'medium',
+    status: 'pending',
+    date: new Date().toISOString().split('T')[0]
+  });
 
-  // Mock data for orders
-  const orders = [
-    {
-      id: "ORD-001",
-      customer: "John Doe",
-      items: 3,
-      total: 299.99,
-      status: "pending",
-      date: "2024-01-15",
-      priority: "high"
-    },
-    {
-      id: "ORD-002", 
-      customer: "Jane Smith",
-      items: 2,
-      total: 149.50,
-      status: "processing",
-      date: "2024-01-14",
-      priority: "medium"
-    },
-    {
-      id: "ORD-003",
-      customer: "Bob Johnson",
-      items: 5,
-      total: 599.99,
-      status: "shipped",
-      date: "2024-01-13",
-      priority: "low"
-    },
-    {
-      id: "ORD-004",
-      customer: "Alice Brown",
-      items: 1,
-      total: 89.99,
-      status: "delivered",
-      date: "2024-01-12",
-      priority: "medium"
+  const handleAddOrder = async () => {
+    await addOrder(formData);
+    setIsDialogOpen(false);
+    setFormData({
+      customer: '',
+      items: 0,
+      total: 0,
+      priority: 'medium',
+      status: 'pending',
+      date: new Date().toISOString().split('T')[0]
+    });
+  };
+
+  const handleDelete = async (id: string) => {
+    if (confirm('Are you sure you want to delete this order?')) {
+      await deleteOrder(id);
     }
-  ];
+  };
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
@@ -156,7 +146,7 @@ const Orders = () => {
               </p>
             </div>
           </div>
-          <Dialog>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button className="mt-4 sm:mt-0">
                 <Plus className="mr-2 h-4 w-4" />
@@ -179,6 +169,8 @@ const Orders = () => {
                     id="customer"
                     placeholder="Customer name"
                     className="col-span-3"
+                    value={formData.customer}
+                    onChange={(e) => setFormData({...formData, customer: e.target.value})}
                   />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
@@ -190,6 +182,8 @@ const Orders = () => {
                     type="number"
                     placeholder="Number of items"
                     className="col-span-3"
+                    value={formData.items}
+                    onChange={(e) => setFormData({...formData, items: parseInt(e.target.value) || 0})}
                   />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
@@ -202,13 +196,15 @@ const Orders = () => {
                     step="0.01"
                     placeholder="Order total"
                     className="col-span-3"
+                    value={formData.total}
+                    onChange={(e) => setFormData({...formData, total: parseFloat(e.target.value) || 0})}
                   />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="priority" className="text-right">
                     Priority
                   </Label>
-                  <Select>
+                  <Select value={formData.priority} onValueChange={(value) => setFormData({...formData, priority: value})}>
                     <SelectTrigger className="col-span-3">
                       <SelectValue placeholder="Select priority" />
                     </SelectTrigger>
@@ -221,8 +217,8 @@ const Orders = () => {
                 </div>
               </div>
               <div className="flex justify-end space-x-2">
-                <Button variant="outline">Cancel</Button>
-                <Button>Create Order</Button>
+                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
+                <Button onClick={handleAddOrder}>Create Order</Button>
               </div>
             </DialogContent>
           </Dialog>
@@ -357,7 +353,7 @@ const Orders = () => {
                         <Button variant="ghost" size="sm">
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm">
+                        <Button variant="ghost" size="sm" onClick={() => handleDelete(order.id)}>
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
