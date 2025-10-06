@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { logAudit } from '@/services/auditLog';
 
 export interface Customer {
   id: string;
@@ -75,6 +76,15 @@ export const useCustomers = () => {
         title: "Success",
         description: "Customer added successfully"
       });
+      
+      await logAudit({
+        action: 'CREATE',
+        entityType: 'customer',
+        entityId: data.id,
+        details: { name: data.name, company: data.company },
+        severity: 'low'
+      });
+      
       return { data, error: null };
     } catch (error: any) {
       toast({
@@ -102,6 +112,15 @@ export const useCustomers = () => {
         title: "Success",
         description: "Customer updated successfully"
       });
+      
+      await logAudit({
+        action: 'UPDATE',
+        entityType: 'customer',
+        entityId: id,
+        details: updates,
+        severity: 'low'
+      });
+      
       return { data, error: null };
     } catch (error: any) {
       toast({
@@ -127,6 +146,14 @@ export const useCustomers = () => {
         title: "Success",
         description: "Customer deleted successfully"
       });
+      
+      await logAudit({
+        action: 'DELETE',
+        entityType: 'customer',
+        entityId: id,
+        severity: 'medium'
+      });
+      
       return { error: null };
     } catch (error: any) {
       toast({

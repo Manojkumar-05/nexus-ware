@@ -10,28 +10,9 @@ import { useNavigate } from 'react-router-dom';
 import { Shield, Filter, Download, Search } from 'lucide-react';
 import { exportToCsv } from '@/utils/csv';
 import { useOrg } from '@/contexts/OrgContext';
+import { useAuditLogs } from '@/hooks/useAuditLogs';
 
-type Log = {
-  id: string;
-  timestamp: string;
-  actor: string;
-  action: 'CREATE' | 'UPDATE' | 'DELETE' | 'LOGIN' | 'EXPORT';
-  entity: string;
-  details: string;
-  severity: 'low' | 'medium' | 'high';
-};
-
-const MOCK_LOGS: Log[] = Array.from({ length: 60 }).map((_, i) => ({
-  id: `LOG-${i + 1}`,
-  timestamp: new Date(Date.now() - i * 3600_000).toISOString(),
-  actor: ['Sarah', 'Mike', 'Emily', 'David'][i % 4],
-  action: (['CREATE', 'UPDATE', 'DELETE', 'LOGIN', 'EXPORT'] as Log['action'][])[i % 5],
-  entity: ['Order', 'Inventory', 'Supplier', 'Employee', 'Report'][i % 5],
-  details: 'Action performed successfully',
-  severity: (['low', 'medium', 'high'] as Log['severity'][])[i % 3],
-}));
-
-const severityBadge = (s: Log['severity']) => {
+const severityBadge = (s: 'low' | 'medium' | 'high') => {
   const map = { low: 'bg-green-100 text-green-700', medium: 'bg-yellow-100 text-yellow-800', high: 'bg-red-100 text-red-700' } as const;
   return <Badge className={map[s]}>{s.toUpperCase()}</Badge>;
 };
@@ -40,22 +21,35 @@ const AuditLogs: React.FC = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const { organizationName } = useOrg();
-  const [actor, setActor] = useState('all');
+  const { logs, loading } = useAuditLogs();
   const [action, setAction] = useState('all');
   const [severity, setSeverity] = useState('all');
+  const [entityType, setEntityType] = useState('all');
   const [q, setQ] = useState('');
 
   const filtered = useMemo(() => {
-    return MOCK_LOGS.filter((l) =>
-      (actor === 'all' || l.actor === actor) &&
+    return logs.filter((l) =>
       (action === 'all' || l.action === action) &&
       (severity === 'all' || l.severity === severity) &&
-      (q.trim() === '' || l.entity.toLowerCase().includes(q.toLowerCase()) || l.details.toLowerCase().includes(q.toLowerCase()))
+      (entityType === 'all' || l.entity_type === entityType) &&
+      (q.trim() === '' || 
+        l.entity_type.toLowerCase().includes(q.toLowerCase()) || 
+        l.user_email?.toLowerCase().includes(q.toLowerCase()) ||
+        JSON.stringify(l.details).toLowerCase().includes(q.toLowerCase()))
     );
-  }, [actor, action, severity, q]);
+  }, [logs, action, severity, entityType, q]);
 
   const onExport = () => {
-    exportToCsv('audit-logs.csv', filtered);
+    const exportData = filtered.map(log => ({
+      timestamp: new Date(log.created_at).toLocaleString(),
+      user: log.user_email || 'System',
+      action: log.action,
+      entity_type: log.entity_type,
+      entity_id: log.entity_id || '-',
+      severity: log.severity,
+      details: JSON.stringify(log.details)
+    }));
+    exportToCsv('audit-logs.csv', exportData);
   };
 
   return (
@@ -102,18 +96,18 @@ const AuditLogs: React.FC = () => {
                   <Input className="pl-8" placeholder="Search entity or details..." value={q} onChange={(e) => setQ(e.target.value)} />
                 </div>
               </div>
-              <Select value={actor} onValueChange={setActor}>
-                <SelectTrigger><SelectValue placeholder="Actor" /></SelectTrigger>
+              <Select value={entityType} onValueChange={setEntityType}>
+                <SelectTrigger><SelectValue placeholder="Entity Type" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All actors</SelectItem>
-                  {[...new Set(MOCK_LOGS.map(l => l.actor))].map(a => <SelectItem key={a} value={a}>{a}</SelectItem>)}
+                  <SelectItem value="all">All entities</SelectItem>
+                  {['order', 'inventory', 'supplier', 'employee', 'customer', 'report', 'sale'].map(e => <SelectItem key={e} value={e}>{e}</SelectItem>)}
                 </SelectContent>
               </Select>
               <Select value={action} onValueChange={setAction}>
                 <SelectTrigger><SelectValue placeholder="Action" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All actions</SelectItem>
-                  {['CREATE','UPDATE','DELETE','LOGIN','EXPORT'].map(a => <SelectItem key={a} value={a}>{a}</SelectItem>)}
+                  {['CREATE','UPDATE','DELETE','LOGIN','EXPORT','VIEW'].map(a => <SelectItem key={a} value={a}>{a}</SelectItem>)}
                 </SelectContent>
               </Select>
               <Select value={severity} onValueChange={setSeverity}>
@@ -133,32 +127,40 @@ const AuditLogs: React.FC = () => {
             <CardDescription>Most recent activity appears first</CardDescription>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>ID</TableHead>
-                  <TableHead>Timestamp</TableHead>
-                  <TableHead>Actor</TableHead>
-                  <TableHead>Action</TableHead>
-                  <TableHead>Entity</TableHead>
-                  <TableHead>Severity</TableHead>
-                  <TableHead>Details</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.map((log) => (
-                  <TableRow key={log.id}>
-                    <TableCell className="font-medium">{log.id}</TableCell>
-                    <TableCell>{new Date(log.timestamp).toLocaleString()}</TableCell>
-                    <TableCell>{log.actor}</TableCell>
-                    <TableCell>{log.action}</TableCell>
-                    <TableCell>{log.entity}</TableCell>
-                    <TableCell>{severityBadge(log.severity)}</TableCell>
-                    <TableCell className="max-w-[300px] truncate" title={log.details}>{log.details}</TableCell>
+            {loading ? (
+              <div className="text-center py-8">Loading logs...</div>
+            ) : filtered.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">No audit logs found</div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Timestamp</TableHead>
+                    <TableHead>User</TableHead>
+                    <TableHead>Action</TableHead>
+                    <TableHead>Entity Type</TableHead>
+                    <TableHead>Entity ID</TableHead>
+                    <TableHead>Severity</TableHead>
+                    <TableHead>Details</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {filtered.map((log) => (
+                    <TableRow key={log.id}>
+                      <TableCell>{new Date(log.created_at).toLocaleString()}</TableCell>
+                      <TableCell className="max-w-[200px] truncate">{log.user_email || 'System'}</TableCell>
+                      <TableCell><Badge variant="outline">{log.action}</Badge></TableCell>
+                      <TableCell>{log.entity_type}</TableCell>
+                      <TableCell className="max-w-[150px] truncate font-mono text-xs">{log.entity_id || '-'}</TableCell>
+                      <TableCell>{severityBadge(log.severity)}</TableCell>
+                      <TableCell className="max-w-[300px] truncate" title={JSON.stringify(log.details)}>
+                        {log.details ? JSON.stringify(log.details) : '-'}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
       </div>

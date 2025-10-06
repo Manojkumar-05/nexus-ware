@@ -362,8 +362,8 @@ const Employees = () => {
                 </div>
               </div>
               <div className="flex justify-end space-x-2">
-                <Button variant="outline">Cancel</Button>
-                <Button>Add Employee</Button>
+                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
+                <Button onClick={handleAddEmployee}>Add Employee</Button>
               </div>
             </DialogContent>
           </Dialog>
