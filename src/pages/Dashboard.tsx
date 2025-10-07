@@ -29,6 +29,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { inventory, loading } = useInventory();
   const [showLowStockAlert, setShowLowStockAlert] = React.useState(false);
+  const [alertDismissed, setAlertDismissed] = React.useState(false);
 
   // Check for low stock items (below 20% of max_quantity)
   const lowStockItems = React.useMemo(() => {
@@ -48,6 +49,16 @@ const Dashboard = () => {
       });
     }
   }, [loading]);
+
+  const handleAlertClick = () => {
+    if (!showLowStockAlert) {
+      setShowLowStockAlert(true);
+      // Dismiss the alert after viewing
+      setTimeout(() => {
+        setAlertDismissed(true);
+      }, 500);
+    }
+  };
 
   const stats = [
     {
@@ -140,13 +151,13 @@ const Dashboard = () => {
 
       <div className="container mx-auto px-4 py-8">
         {/* Low Stock Alert */}
-        {lowStockItems.length > 0 && (
+        {lowStockItems.length > 0 && !alertDismissed && (
           <div className="mb-6">
-            <Alert variant="destructive" className="cursor-pointer" onClick={() => setShowLowStockAlert(!showLowStockAlert)}>
+            <Alert variant="destructive" className="cursor-pointer" onClick={handleAlertClick}>
               <AlertTriangle className="h-4 w-4" />
               <AlertTitle>Low Stock Warning</AlertTitle>
               <AlertDescription>
-                {lowStockItems.length} item(s) are below 20% stock level. Click to {showLowStockAlert ? 'hide' : 'view'} details.
+                {lowStockItems.length} item(s) are below 20% stock level. Click to view details.
               </AlertDescription>
             </Alert>
             
