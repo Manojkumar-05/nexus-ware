@@ -12,17 +12,42 @@ import {
   BarChart3,
   UserCheck,
   Settings,
-  Database
+  Database,
+  AlertTriangle
 } from 'lucide-react';
 import ChangeOrgDialog from '@/components/ChangeOrgDialog';
 import ThemeToggle from '@/components/ThemeToggle';
 import { fetchRecentActivities, ActivityItem } from '@/services/activity';
 import { useOrg } from '@/contexts/OrgContext';
+import { useInventory } from '@/hooks/useInventory';
+import { toast } from '@/hooks/use-toast';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const Dashboard = () => {
   const { user, signOut } = useAuth();
   const { organizationName } = useOrg();
   const navigate = useNavigate();
+  const { inventory, loading } = useInventory();
+  const [showLowStockAlert, setShowLowStockAlert] = React.useState(false);
+
+  // Check for low stock items (below 20% of max_quantity)
+  const lowStockItems = React.useMemo(() => {
+    return inventory.filter(item => {
+      const threshold = item.max_quantity * 0.2;
+      return item.quantity <= threshold;
+    });
+  }, [inventory]);
+
+  // Show toast on mount if there are low stock items
+  React.useEffect(() => {
+    if (!loading && lowStockItems.length > 0) {
+      toast({
+        title: "Low Stock Alert",
+        description: `${lowStockItems.length} item(s) are running low on stock. Click the alert button to view details.`,
+        variant: "destructive",
+      });
+    }
+  }, [loading]);
 
   const stats = [
     {
@@ -114,6 +139,56 @@ const Dashboard = () => {
       </header>
 
       <div className="container mx-auto px-4 py-8">
+        {/* Low Stock Alert */}
+        {lowStockItems.length > 0 && (
+          <div className="mb-6">
+            <Alert variant="destructive" className="cursor-pointer" onClick={() => setShowLowStockAlert(!showLowStockAlert)}>
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Low Stock Warning</AlertTitle>
+              <AlertDescription>
+                {lowStockItems.length} item(s) are below 20% stock level. Click to {showLowStockAlert ? 'hide' : 'view'} details.
+              </AlertDescription>
+            </Alert>
+            
+            {showLowStockAlert && (
+              <Card className="mt-4">
+                <CardHeader>
+                  <CardTitle>Low Stock Items</CardTitle>
+                  <CardDescription>Items that need restocking soon</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {lowStockItems.map(item => {
+                      const stockPercentage = (item.quantity / item.max_quantity) * 100;
+                      return (
+                        <div key={item.id} className="flex items-center justify-between p-3 border rounded-lg">
+                          <div className="flex-1">
+                            <p className="font-medium">{item.name}</p>
+                            <p className="text-sm text-muted-foreground">SKU: {item.sku}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-medium text-destructive">
+                              {item.quantity} / {item.max_quantity} ({stockPercentage.toFixed(0)}%)
+                            </p>
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="mt-1"
+                              onClick={() => navigate('/inventory')}
+                            >
+                              Restock
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        )}
+
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {stats.map((stat, index) => {
