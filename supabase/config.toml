@@ -1,1 +1,4 @@
 project_id = "zhalvnujwcvcdhmezytw"
+
+[functions.inventory-ai-suggestions]
+verify_jwt = false

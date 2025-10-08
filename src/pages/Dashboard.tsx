@@ -13,7 +13,8 @@ import {
   UserCheck,
   Settings,
   Database,
-  AlertTriangle
+  AlertTriangle,
+  Calendar
 } from 'lucide-react';
 import ChangeOrgDialog from '@/components/ChangeOrgDialog';
 import ThemeToggle from '@/components/ThemeToggle';
@@ -22,6 +23,7 @@ import { useOrg } from '@/contexts/OrgContext';
 import { useInventory } from '@/hooks/useInventory';
 import { toast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import AISuggestions from '@/components/AISuggestions';
 
 const Dashboard = () => {
   const { user, signOut } = useAuth();
@@ -39,14 +41,34 @@ const Dashboard = () => {
     });
   }, [inventory]);
 
-  // Show toast on mount if there are low stock items
+  // Check for items expiring soon (within 7 days)
+  const expiringItems = React.useMemo(() => {
+    const today = new Date();
+    return inventory.filter(item => {
+      if (!item.expiry_date) return false;
+      const expiryDate = new Date(item.expiry_date);
+      const daysUntilExpiry = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      return daysUntilExpiry <= 7 && daysUntilExpiry >= 0;
+    });
+  }, [inventory]);
+
+  // Show toast on mount if there are low stock items or expiring items
   React.useEffect(() => {
-    if (!loading && lowStockItems.length > 0) {
-      toast({
-        title: "Low Stock Alert",
-        description: `${lowStockItems.length} item(s) are running low on stock. Click the alert button to view details.`,
-        variant: "destructive",
-      });
+    if (!loading) {
+      if (lowStockItems.length > 0) {
+        toast({
+          title: "Low Stock Alert",
+          description: `${lowStockItems.length} item(s) are running low on stock.`,
+          variant: "destructive",
+        });
+      }
+      if (expiringItems.length > 0) {
+        toast({
+          title: "Expiry Warning",
+          description: `${expiringItems.length} item(s) expiring within 7 days`,
+          variant: "destructive"
+        });
+      }
     }
   }, [loading]);
 
@@ -150,6 +172,11 @@ const Dashboard = () => {
       </header>
 
       <div className="container mx-auto px-4 py-8">
+        {/* AI Suggestions Section */}
+        <div className="mb-6">
+          <AISuggestions />
+        </div>
+
         {/* Low Stock Alert */}
         {lowStockItems.length > 0 && !alertDismissed && (
           <div className="mb-6">
@@ -197,6 +224,44 @@ const Dashboard = () => {
                 </CardContent>
               </Card>
             )}
+          </div>
+        )}
+
+        {/* Expiry Warning Alert */}
+        {expiringItems.length > 0 && (
+          <div className="mb-6">
+            <Alert variant="destructive" className="bg-orange-50 border-orange-200">
+              <Calendar className="h-4 w-4" />
+              <AlertTitle>Expiry Warning</AlertTitle>
+              <AlertDescription>
+                {expiringItems.length} item(s) expiring within 7 days
+              </AlertDescription>
+            </Alert>
+            <Card className="mt-4">
+              <CardHeader>
+                <CardTitle>Items Expiring Soon</CardTitle>
+                <CardDescription>Products expiring within the next 7 days</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {expiringItems.map(item => {
+                    const daysLeft = Math.ceil((new Date(item.expiry_date!).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+                    return (
+                      <div key={item.id} className="flex justify-between items-center p-3 bg-orange-50 rounded-lg">
+                        <div>
+                          <p className="font-medium">{item.name}</p>
+                          <p className="text-sm text-muted-foreground">Expires: {item.expiry_date}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-semibold text-orange-600">{daysLeft} days left</p>
+                          <p className="text-sm text-muted-foreground">Qty: {item.quantity}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
           </div>
         )}
 

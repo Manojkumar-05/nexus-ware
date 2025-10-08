@@ -184,6 +184,7 @@ export type Database = {
           category: string
           created_at: string | null
           description: string
+          expiry_date: string | null
           id: string
           last_updated: string
           location: string
@@ -203,6 +204,7 @@ export type Database = {
           category: string
           created_at?: string | null
           description: string
+          expiry_date?: string | null
           id: string
           last_updated: string
           location: string
@@ -222,6 +224,7 @@ export type Database = {
           category?: string
           created_at?: string | null
           description?: string
+          expiry_date?: string | null
           id?: string
           last_updated?: string
           location?: string

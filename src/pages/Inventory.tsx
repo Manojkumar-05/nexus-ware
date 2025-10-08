@@ -55,7 +55,8 @@ const Inventory = () => {
     supplier: '',
     location: '',
     status: 'in-stock',
-    reorder_point: 0
+    reorder_point: 0,
+    expiry_date: ''
   });
 
   // Form state for adding stock
@@ -79,7 +80,8 @@ const Inventory = () => {
       supplier: '',
       location: '',
       status: 'in-stock',
-      reorder_point: 0
+      reorder_point: 0,
+      expiry_date: ''
     });
   };
 
@@ -346,6 +348,18 @@ const Inventory = () => {
                       className="col-span-3"
                       value={formData.location}
                       onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="expiry_date" className="text-right">
+                      Expiry Date
+                    </Label>
+                    <Input
+                      id="expiry_date"
+                      type="date"
+                      className="col-span-3"
+                      value={formData.expiry_date}
+                      onChange={(e) => setFormData({ ...formData, expiry_date: e.target.value })}
                     />
                   </div>
                 </div>

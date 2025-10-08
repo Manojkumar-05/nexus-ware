@@ -18,6 +18,7 @@ export interface InventoryItem {
   last_updated: string;
   reorder_point: number;
   total_value: number;
+  expiry_date?: string | null;
 }
 
 export const useInventory = () => {
@@ -48,7 +49,7 @@ export const useInventory = () => {
     fetchInventory();
   }, []);
 
-  const addItem = async (item: Omit<InventoryItem, 'id' | 'created_at' | 'updated_at' | 'total_value' | 'last_updated'>) => {
+  const addItem = async (item: Omit<InventoryItem, 'id' | 'created_at' | 'updated_at' | 'total_value' | 'last_updated' | 'expiry_date'> & { expiry_date?: string | null }) => {
     try {
       const total_value = item.quantity * item.unit_price;
       const { data, error } = await supabase
