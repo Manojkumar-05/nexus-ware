@@ -39,6 +39,7 @@ import {
   Mail
 } from 'lucide-react';
 import { formatINR, usdToInr } from '@/utils/currency';
+import { toast } from '@/hooks/use-toast';
 
 const Sales = () => {
   const { user, signOut } = useAuth();
@@ -551,14 +552,40 @@ const Sales = () => {
                     </TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
-                        <Button variant="ghost" size="sm">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => {
+                            toast({
+                              title: "Sale Details",
+                              description: `ID: ${sale.id}\nCustomer: ${sale.customer}\nTotal: ${formatINR(usdToInr(sale.total))}\nStatus: ${sale.status}\nPayment: ${sale.payment_method}`,
+                            });
+                          }}
+                        >
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => {
+                            toast({
+                              title: "Edit Feature",
+                              description: "Edit functionality coming soon!",
+                            });
+                          }}
+                        >
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDelete(sale.id)}>
-                          <Trash2 className="h-4 w-4" />
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => {
+                            if (confirm(`Are you sure you want to delete sale ${sale.id}?`)) {
+                              handleDelete(sale.id);
+                            }
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
                       </div>
                     </TableCell>

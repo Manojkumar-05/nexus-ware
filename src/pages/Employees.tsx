@@ -38,6 +38,7 @@ import {
   Star
 } from 'lucide-react';
 import { formatINR, usdToInr } from '@/utils/currency';
+import { toast } from '@/hooks/use-toast';
 
 const Employees = () => {
   const { user, signOut } = useAuth();
@@ -538,14 +539,40 @@ const Employees = () => {
                     </TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
-                        <Button variant="ghost" size="sm">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => {
+                            toast({
+                              title: employee.name,
+                              description: `Position: ${employee.position}\nDepartment: ${employee.department}\nEmail: ${employee.email}\nPhone: ${employee.phone}\nHired: ${employee.hire_date}\nPerformance: ${employee.performance}`,
+                            });
+                          }}
+                        >
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => {
+                            toast({
+                              title: "Edit Feature",
+                              description: "Edit functionality coming soon!",
+                            });
+                          }}
+                        >
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm">
-                          <Trash2 className="h-4 w-4" />
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => {
+                            if (confirm(`Are you sure you want to delete employee ${employee.name}?`)) {
+                              handleDelete(employee.id);
+                            }
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
                       </div>
                     </TableCell>

@@ -457,10 +457,30 @@ const Suppliers = () => {
                       <TableCell>${supplier.total_spent.toLocaleString()}</TableCell>
                       <TableCell>
                         <div className="flex space-x-2">
-                          <Button variant="ghost" size="sm" title="View details">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            title="View details"
+                            onClick={() => {
+                              toast({
+                                title: supplier.name,
+                                description: `Contact: ${supplier.contact}\nEmail: ${supplier.email}\nPhone: ${supplier.phone}\nCategory: ${supplier.category}\nRating: ${supplier.rating}\nReliability: ${supplier.reliability}`,
+                              });
+                            }}
+                          >
                             <Eye className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="sm" title="Edit supplier">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            title="Edit supplier"
+                            onClick={() => {
+                              toast({
+                                title: "Edit Feature",
+                                description: "Edit functionality coming soon!",
+                              });
+                            }}
+                          >
                             <Edit className="h-4 w-4" />
                           </Button>
                           <Button 
@@ -469,7 +489,7 @@ const Suppliers = () => {
                             title="Delete supplier"
                             onClick={() => handleDeleteSupplier(supplier.id)}
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
                         </div>
                       </TableCell>

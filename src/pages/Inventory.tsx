@@ -30,6 +30,7 @@ import {
   IndianRupee as DollarSign,
 } from 'lucide-react';
 import { formatINR, usdToInr } from '@/utils/currency';
+import { toast } from '@/hooks/use-toast';
 
 const Inventory = () => {
   const { user, signOut } = useAuth();
@@ -502,14 +503,41 @@ const Inventory = () => {
                     <TableCell>{getStatusBadge(item.status)}</TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
-                        <Button variant="ghost" size="sm">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => {
+                            // View details in a toast or modal
+                            toast({
+                              title: item.name,
+                              description: `SKU: ${item.sku}\nCategory: ${item.category}\nDescription: ${item.description}\nLocation: ${item.location}\nSupplier: ${item.supplier}${item.expiry_date ? `\nExpiry: ${item.expiry_date}` : ''}`,
+                            });
+                          }}
+                        >
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => {
+                            toast({
+                              title: "Edit Feature",
+                              description: "Edit functionality coming soon!",
+                            });
+                          }}
+                        >
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => deleteItem(item.id)}>
-                          <Trash2 className="h-4 w-4" />
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => {
+                            if (confirm(`Are you sure you want to delete ${item.name}?`)) {
+                              deleteItem(item.id);
+                            }
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
                       </div>
                     </TableCell>

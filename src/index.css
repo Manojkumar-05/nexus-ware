@@ -8,7 +8,7 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Premium light palette */
+    /* Premium light palette - Professional Healthcare Design */
     --background: 0 0% 100%;
     --foreground: 222 47% 11%;
 
@@ -18,26 +18,31 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 258 90% 55%; /* royal violet */
+    --primary: 210 100% 45%; /* Professional Medical Blue */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 222 100% 97%;
-    --secondary-foreground: 258 90% 35%;
+    --secondary: 210 100% 97%;
+    --secondary-foreground: 210 100% 25%;
 
-    --muted: 220 15% 95%;
-    --muted-foreground: 220 10% 46%;
+    --muted: 210 15% 95%;
+    --muted-foreground: 210 10% 46%;
 
-    --accent: 262 100% 97%;
-    --accent-foreground: 258 90% 35%;
+    --accent: 158 64% 52%; /* Teal accent for healthcare */
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 258 90% 55%;
+    --ring: 210 100% 45%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
+    
+    /* Custom professional shadows */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 
     --sidebar-background: 0 0% 98%;
 
@@ -57,34 +62,34 @@ All colors MUST be HSL.
   }
 
   .dark {
-    /* Premium dark palette */
-    --background: 240 22% 7%;
-    --foreground: 0 0% 100%;
+    /* Premium dark palette - Professional Healthcare Dark Mode */
+    --background: 220 20% 8%;
+    --foreground: 0 0% 98%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 220 20% 10%;
+    --card-foreground: 0 0% 98%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 220 20% 10%;
+    --popover-foreground: 0 0% 98%;
 
-    --primary: 258 90% 65%;
-    --primary-foreground: 0 0% 10%;
+    --primary: 210 100% 55%; /* Lighter medical blue for dark mode */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 240 15% 13%;
+    --secondary: 220 20% 15%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 240 15% 13%;
-    --muted-foreground: 240 5% 72%;
+    --muted: 220 15% 15%;
+    --muted-foreground: 220 10% 65%;
 
-    --accent: 258 30% 20%;
+    --accent: 158 64% 45%; /* Teal accent */
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 72% 55%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --border: 220 20% 18%;
+    --input: 220 20% 18%;
+    --ring: 210 100% 55%;
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;

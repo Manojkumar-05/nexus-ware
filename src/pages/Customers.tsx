@@ -38,6 +38,7 @@ import {
   MessageSquare
 } from 'lucide-react';
 import { formatINR, usdToInr } from '@/utils/currency';
+import { toast } from '@/hooks/use-toast';
 
 const Customers = () => {
   const { user, signOut } = useAuth();
@@ -575,17 +576,52 @@ const Customers = () => {
                     </TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
-                        <Button variant="ghost" size="sm">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => {
+                            toast({
+                              title: customer.name,
+                              description: `Email: ${customer.email}\nPhone: ${customer.phone}\nCompany: ${customer.company}\nTier: ${customer.tier}\nTotal Orders: ${customer.total_orders}\nTotal Spent: ${formatINR(usdToInr(customer.total_spent))}`,
+                            });
+                          }}
+                        >
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => {
+                            toast({
+                              title: "Edit Feature",
+                              description: "Edit functionality coming soon!",
+                            });
+                          }}
+                        >
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => {
+                            toast({
+                              title: "Contact Customer",
+                              description: `Send a message to ${customer.name} at ${customer.email}`,
+                            });
+                          }}
+                        >
                           <MessageSquare className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm">
-                          <Trash2 className="h-4 w-4" />
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => {
+                            if (confirm(`Are you sure you want to delete customer ${customer.name}?`)) {
+                              handleDelete(customer.id);
+                            }
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
                       </div>
                     </TableCell>
